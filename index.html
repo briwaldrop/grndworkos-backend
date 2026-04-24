@@ -1,0 +1,2036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FieldOS — Field Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --bg2: #111318;
+    --bg3: #181c23;
+    --bg4: #1e232d;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --muted2: #9ca3af;
+    --accent: #f5a623;
+    --accent2: #ff6b35;
+    --green: #22c55e;
+    --green-dim: rgba(34,197,94,0.12);
+    --red: #ef4444;
+    --red-dim: rgba(239,68,68,0.12);
+    --blue: #3b82f6;
+    --blue-dim: rgba(59,130,246,0.12);
+    --amber: #f59e0b;
+    --amber-dim: rgba(245,158,11,0.12);
+    --purple: #a855f7;
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* LAYOUT */
+  .shell { display: flex; height: 100vh; overflow: hidden; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 220px;
+    min-width: 220px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    transition: width 0.2s;
+  }
+  .logo {
+    padding: 20px 18px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-mark {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo-mark svg { width: 18px; height: 18px; }
+  .logo-text { font-family: var(--font-display); font-weight: 800; font-size: 17px; letter-spacing: -0.5px; }
+  .logo-text span { color: var(--accent); }
+
+  .nav { flex: 1; padding: 12px 10px; overflow-y: auto; }
+  .nav-section-label {
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    padding: 10px 8px 6px;
+    font-family: var(--font-mono);
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    color: var(--muted2);
+    font-size: 13.5px;
+    font-weight: 400;
+    transition: all 0.15s;
+    margin-bottom: 1px;
+    border: 1px solid transparent;
+    user-select: none;
+  }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active {
+    background: rgba(245,166,35,0.1);
+    color: var(--accent);
+    border-color: rgba(245,166,35,0.2);
+  }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .nav-badge {
+    margin-left: auto;
+    background: var(--accent);
+    color: #000;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 20px;
+    font-family: var(--font-mono);
+  }
+
+  .sidebar-footer {
+    padding: 14px 10px;
+    border-top: 1px solid var(--border);
+  }
+  .user-chip {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+  .user-chip:hover { background: var(--bg3); }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: #000;
+    flex-shrink: 0;
+    font-family: var(--font-display);
+  }
+  .user-info { flex: 1; min-width: 0; }
+  .user-name { font-size: 12.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-role { font-size: 11px; color: var(--muted); }
+
+  /* MAIN */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .topbar {
+    height: 56px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 22px;
+    gap: 14px;
+    background: var(--bg2);
+    flex-shrink: 0;
+  }
+  .topbar-title { font-family: var(--font-display); font-size: 17px; font-weight: 700; flex: 1; }
+  .topbar-subtitle { font-size: 12px; color: var(--muted); margin-top: 1px; font-family: var(--font-mono); }
+
+  .search-box {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 12px;
+    width: 220px;
+  }
+  .search-box svg { width: 14px; height: 14px; color: var(--muted); flex-shrink: 0; }
+  .search-box input {
+    background: none; border: none; outline: none;
+    color: var(--text); font-size: 13px; font-family: var(--font-body);
+    width: 100%;
+  }
+  .search-box input::placeholder { color: var(--muted); }
+
+  .btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px; font-weight: 500;
+    cursor: pointer; border: none;
+    font-family: var(--font-body);
+    transition: all 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:hover { background: #f0b842; }
+  .btn-ghost { background: var(--bg3); color: var(--text); border: 1px solid var(--border2); }
+  .btn-ghost:hover { background: var(--bg4); }
+  .btn svg { width: 14px; height: 14px; }
+
+  .content { flex: 1; overflow-y: auto; padding: 20px 22px; }
+
+  /* PANELS (tabs) */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* STAT CARDS */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .stat-card:hover { border-color: var(--border2); }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .stat-card.green::before { background: var(--green); }
+  .stat-card.amber::before { background: var(--amber); }
+  .stat-card.blue::before { background: var(--blue); }
+  .stat-card.red::before { background: var(--red); }
+  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-family: var(--font-mono); margin-bottom: 8px; }
+  .stat-value { font-family: var(--font-display); font-size: 26px; font-weight: 700; line-height: 1; margin-bottom: 6px; }
+  .stat-change { font-size: 12px; display: flex; align-items: center; gap: 4px; }
+  .stat-change.up { color: var(--green); }
+  .stat-change.down { color: var(--red); }
+  .stat-icon {
+    position: absolute;
+    right: 16px; top: 16px;
+    opacity: 0.08;
+  }
+  .stat-icon svg { width: 40px; height: 40px; }
+
+  /* TWO COL */
+  .two-col { display: grid; grid-template-columns: 1fr 360px; gap: 14px; margin-bottom: 14px; }
+  .one-col { margin-bottom: 14px; }
+
+  /* CARD */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-title { font-family: var(--font-display); font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .card-title svg { width: 15px; height: 15px; }
+  .card-body { padding: 16px 18px; }
+
+  /* CREW TABLE */
+  .crew-table { width: 100%; border-collapse: collapse; }
+  .crew-table th {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); font-family: var(--font-mono); font-weight: 500;
+    padding: 0 12px 10px; text-align: left;
+  }
+  .crew-table td { padding: 10px 12px; border-top: 1px solid var(--border); vertical-align: middle; }
+  .crew-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .member-info { display: flex; align-items: center; gap: 10px; }
+  .member-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; flex-shrink: 0;
+    font-family: var(--font-display);
+  }
+  .member-name { font-size: 13px; font-weight: 500; }
+  .member-role { font-size: 11px; color: var(--muted); }
+
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 9px; border-radius: 20px;
+    font-size: 11px; font-weight: 500; font-family: var(--font-mono);
+  }
+  .status-pill.on { background: var(--green-dim); color: var(--green); }
+  .status-pill.off { background: rgba(107,114,128,0.12); color: var(--muted2); }
+  .status-pill.travel { background: var(--blue-dim); color: var(--blue); }
+  .status-pill::before {
+    content: '';
+    width: 6px; height: 6px; border-radius: 50%;
+    background: currentColor;
+  }
+
+  .hours-bar { display: flex; align-items: center; gap: 10px; }
+  .bar-track {
+    flex: 1; height: 4px; background: var(--bg4); border-radius: 2px; overflow: hidden;
+  }
+  .bar-fill { height: 100%; border-radius: 2px; background: var(--accent); }
+  .hours-num { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); width: 36px; text-align: right; }
+
+  /* JOBS LIST */
+  .job-item {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .job-item:last-child { border-bottom: none; }
+  .job-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .job-info { flex: 1; min-width: 0; }
+  .job-name { font-size: 13px; font-weight: 500; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .job-meta { font-size: 11px; color: var(--muted); display: flex; gap: 10px; font-family: var(--font-mono); }
+  .job-profit {
+    font-family: var(--font-display); font-size: 14px; font-weight: 700;
+    text-align: right; flex-shrink: 0;
+  }
+  .job-profit.pos { color: var(--green); }
+  .job-profit.neg { color: var(--red); }
+  .job-profit.warn { color: var(--amber); }
+
+  /* PROFIT METER */
+  .profit-meter { margin-bottom: 14px; }
+  .profit-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 6px; font-family: var(--font-mono); }
+  .profit-track { height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
+  .profit-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+  .profit-fill.good { background: linear-gradient(90deg, var(--green), #4ade80); }
+  .profit-fill.warn { background: linear-gradient(90deg, var(--amber), #fcd34d); }
+  .profit-fill.bad { background: linear-gradient(90deg, var(--red), #f87171); }
+
+  /* PHOTO GRID */
+  .photo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .photo-thumb {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+  }
+  .photo-thumb:hover .photo-overlay { opacity: 1; }
+  .photo-canvas { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+  .photo-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+    border-radius: 8px;
+  }
+  .photo-overlay svg { width: 18px; height: 18px; }
+
+  /* CHECKLIST */
+  .checklist-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .checklist-item:last-child { border-bottom: none; }
+  .check-box {
+    width: 18px; height: 18px; border-radius: 5px;
+    border: 1.5px solid var(--border2);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .check-box.checked { background: var(--green); border-color: var(--green); }
+  .check-box.checked::after {
+    content: '';
+    width: 5px; height: 9px;
+    border: 2px solid #000;
+    border-top: none; border-left: none;
+    transform: rotate(45deg) translate(-1px, -1px);
+  }
+  .check-text { font-size: 13px; flex: 1; }
+  .check-text.done { color: var(--muted); text-decoration: line-through; }
+  .check-tag {
+    font-size: 10px; font-family: var(--font-mono);
+    padding: 2px 7px; border-radius: 4px;
+    background: var(--bg4); color: var(--muted);
+  }
+
+  /* EQUIPMENT */
+  .equip-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .equip-item:last-child { border-bottom: none; }
+  .equip-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: var(--bg3);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 18px;
+  }
+  .equip-info { flex: 1; }
+  .equip-name { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+  .equip-detail { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
+  .equip-status { font-size: 11px; font-family: var(--font-mono); }
+
+  /* SAFETY */
+  .safety-item {
+    display: flex; gap: 12px; padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .safety-item:last-child { border-bottom: none; }
+  .safety-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .safety-title { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+  .safety-meta { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
+
+  /* AI ASSISTANT */
+  .ai-bar {
+    display: flex; align-items: center; gap: 10px;
+    background: linear-gradient(135deg, rgba(168,85,247,0.08), rgba(59,130,246,0.08));
+    border: 1px solid rgba(168,85,247,0.2);
+    border-radius: var(--radius-lg);
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .ai-bar:hover { border-color: rgba(168,85,247,0.4); }
+  .ai-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--purple); animation: pulse 2s infinite; flex-shrink: 0; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+  .ai-text { flex: 1; font-size: 13px; color: var(--muted2); }
+  .ai-text strong { color: var(--purple); }
+  .ai-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .ai-chip {
+    padding: 4px 10px; border-radius: 20px;
+    background: rgba(168,85,247,0.1); color: var(--purple);
+    font-size: 11.5px; font-family: var(--font-mono);
+    cursor: pointer; border: 1px solid rgba(168,85,247,0.2);
+    transition: all 0.15s;
+  }
+  .ai-chip:hover { background: rgba(168,85,247,0.2); }
+
+  /* CLOCK IN BAR */
+  .clock-banner {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--green-dim);
+    border: 1px solid rgba(34,197,94,0.2);
+    border-radius: var(--radius-lg);
+    padding: 14px 18px;
+    margin-bottom: 14px;
+  }
+  .clock-live { width: 10px; height: 10px; border-radius: 50%; background: var(--green); flex-shrink: 0; box-shadow: 0 0 0 3px rgba(34,197,94,0.3); animation: live 2s infinite; }
+  @keyframes live { 0%,100%{box-shadow:0 0 0 3px rgba(34,197,94,0.3)} 50%{box-shadow:0 0 0 6px rgba(34,197,94,0.1)} }
+  .clock-info { flex: 1; }
+  .clock-label { font-size: 12px; color: var(--green); font-family: var(--font-mono); font-weight: 500; }
+  .clock-time { font-family: var(--font-display); font-size: 22px; font-weight: 700; line-height: 1.2; }
+  .clock-sub { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
+  .clock-actions { display: flex; gap: 8px; }
+
+  /* MAP PLACEHOLDER */
+  .map-placeholder {
+    background: var(--bg3);
+    border-radius: var(--radius);
+    height: 160px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .map-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .map-pin { position: absolute; font-size: 22px; }
+  .map-label {
+    position: absolute; bottom: 8px; left: 8px;
+    font-size: 10px; font-family: var(--font-mono);
+    color: var(--muted); background: var(--bg2);
+    padding: 3px 7px; border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  /* WEATHER STRIP */
+  .weather-strip {
+    display: flex; gap: 8px; margin-bottom: 12px;
+  }
+  .weather-chip {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 10px;
+    font-size: 12px; font-family: var(--font-mono);
+  }
+
+  /* NOTIFICATION DOT */
+  .notif-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--red);
+    flex-shrink: 0;
+  }
+
+  /* TAG */
+  .tag {
+    display: inline-flex; align-items: center;
+    padding: 2px 8px; border-radius: 4px;
+    font-size: 11px; font-family: var(--font-mono);
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
+
+  /* Animations */
+  @keyframes fadeIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+  .panel.active { animation: fadeIn 0.2s ease; }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .sidebar { width: 56px; min-width: 56px; }
+    .logo-text, .nav-item span, .nav-badge, .sidebar-footer .user-info { display: none; }
+    .nav-item { justify-content: center; padding: 10px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .two-col { grid-template-columns: 1fr; }
+    .photo-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      <div class="logo-text">Field<span>OS</span></div>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-section-label">Workspace</div>
+      <div class="nav-item active" onclick="showPanel('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>Dashboard</span>
+      </div>
+      <div class="nav-item" onclick="showPanel('crew')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        <span>Crew & Time</span>
+        <span class="nav-badge">3</span>
+      </div>
+      <div class="nav-item" onclick="showPanel('jobs')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span>Jobs & Profit</span>
+      </div>
+      <div class="nav-item" onclick="showPanel('photos')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <span>Photos & Docs</span>
+      </div>
+      <div class="nav-section-label">Field Tools</div>
+      <div class="nav-item" onclick="showPanel('hauling')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v4h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        <span>Hauling & Dispatch</span>
+        <span class="nav-badge" style="background:var(--blue);color:#fff">4</span>
+      </div>
+      <div class="nav-item" onclick="showPanel('network')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/></svg>
+        <span>Network</span>
+      </div>
+      <div class="nav-item" onclick="showPanel('equipment')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <span>Equipment</span>
+      </div>
+      <div class="nav-item" onclick="showPanel('safety')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>Safety & OHS</span>
+        <span class="nav-badge" style="background:var(--red);color:#fff">1</span>
+      </div>
+      <div class="nav-item" onclick="showPanel('payroll')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        <span>Payroll</span>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="avatar">JD</div>
+        <div class="user-info">
+          <div class="user-name">Jake Drish</div>
+          <div class="user-role">Owner / Admin</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="panel-title">Dashboard</div>
+      </div>
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input placeholder="Search jobs, crew, docs…">
+      </div>
+      <button class="btn btn-ghost" style="font-size:12px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+        Alerts
+      </button>
+      <button class="btn btn-ghost" style="font-size:12px;border-color:rgba(34,197,94,0.35);color:var(--green)" onclick="downloadApp()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download
+      </button>
+      <button class="btn btn-primary" onclick="clockInModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Clock In
+      </button>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="panel active" id="panel-dashboard">
+
+        <!-- AI Bar -->
+        <div class="ai-bar">
+          <div class="ai-dot"></div>
+          <div class="ai-text"><strong>FieldOS AI</strong> — 3 crew members clocked in. Cedar Valley Rd is 12% over budget. Say or tap a shortcut:</div>
+          <div class="ai-chips">
+            <div class="ai-chip" onclick="aiAction('Generate daily report')">Daily Report</div>
+            <div class="ai-chip" onclick="aiAction('Recap Cedar Valley Rd progress')">Job Recap</div>
+            <div class="ai-chip" onclick="aiAction('Create safety checklist for today')">Safety Check</div>
+          </div>
+        </div>
+
+        <!-- Clock Banner -->
+        <div class="clock-banner">
+          <div class="clock-live"></div>
+          <div class="clock-info">
+            <div class="clock-label">● LIVE — 3 crew on-site</div>
+            <div class="clock-time" id="live-clock">07:42:18</div>
+            <div class="clock-sub">Geofence auto-detected · Cedar Valley Rd Drainage</div>
+          </div>
+          <div class="clock-actions">
+            <button class="btn btn-ghost" style="font-size:12px">View Map</button>
+            <button class="btn btn-ghost" style="font-size:12px; color:var(--red); border-color:rgba(239,68,68,0.3)">Clock Out</button>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row">
+          <div class="stat-card green">
+            <div class="stat-label">Active Jobs</div>
+            <div class="stat-value" style="color:var(--green)">6</div>
+            <div class="stat-change up">↑ 2 from last week</div>
+            <div class="stat-icon"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+          </div>
+          <div class="stat-card amber">
+            <div class="stat-label">Crew On-Site</div>
+            <div class="stat-value" style="color:var(--amber)">3<span style="font-size:14px;color:var(--muted)">/8</span></div>
+            <div class="stat-change" style="color:var(--muted)">5 clocked out</div>
+            <div class="stat-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-label">Weekly Revenue</div>
+            <div class="stat-value" style="color:var(--blue)">$84k</div>
+            <div class="stat-change up">↑ 9% vs last week</div>
+            <div class="stat-icon"><svg viewBox="0 0 24 24" fill="currentColor"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+          </div>
+          <div class="stat-card red">
+            <div class="stat-label">Avg Margin</div>
+            <div class="stat-value" style="color:var(--accent)">18%</div>
+            <div class="stat-change down">↓ Cedar Valley warning</div>
+            <div class="stat-icon"><svg viewBox="0 0 24 24" fill="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <!-- Jobs profit -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                Live Job Profitability
+              </div>
+              <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="showPanel('jobs')">View All</button>
+            </div>
+            <div class="card-body">
+              <div class="job-item">
+                <div class="job-dot" style="background:var(--green)"></div>
+                <div class="job-info">
+                  <div class="job-name">Maple Ridge Subdivision Grading</div>
+                  <div class="job-meta"><span>3 crew</span><span>Day 4/12</span><span>$48,200 budget</span></div>
+                </div>
+                <div class="job-profit pos">+22%</div>
+              </div>
+              <div class="job-item">
+                <div class="job-dot" style="background:var(--green)"></div>
+                <div class="job-info">
+                  <div class="job-name">Hwy 34 Storm Drain Install</div>
+                  <div class="job-meta"><span>2 crew</span><span>Day 7/14</span><span>$31,500 budget</span></div>
+                </div>
+                <div class="job-profit pos">+17%</div>
+              </div>
+              <div class="job-item">
+                <div class="job-dot" style="background:var(--amber)"></div>
+                <div class="job-info">
+                  <div class="job-name">Cedar Valley Rd Drainage</div>
+                  <div class="job-meta"><span>3 crew</span><span>Day 9/10</span><span>$22,000 budget</span></div>
+                </div>
+                <div class="job-profit warn">-3%</div>
+              </div>
+              <div class="job-item">
+                <div class="job-dot" style="background:var(--blue)"></div>
+                <div class="job-info">
+                  <div class="job-name">Lakeside Retention Pond</div>
+                  <div class="job-meta"><span>1 crew</span><span>Day 2/20</span><span>$67,000 budget</span></div>
+                </div>
+                <div class="job-profit pos">+31%</div>
+              </div>
+              <div class="job-item">
+                <div class="job-dot" style="background:var(--muted)"></div>
+                <div class="job-info">
+                  <div class="job-name">Ridgeline Access Road</div>
+                  <div class="job-meta"><span>0 crew</span><span>Scheduled tomorrow</span></div>
+                </div>
+                <div class="job-profit" style="color:var(--muted)">—</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Map + weather -->
+          <div style="display:flex; flex-direction:column; gap:14px;">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 00-8 8c0 5.33 8 13 8 13s8-7.67 8-13a8 8 0 00-8-8z"/></svg>
+                  Job Sites Map
+                </div>
+              </div>
+              <div class="card-body" style="padding-bottom:14px">
+                <div class="map-placeholder">
+                  <div class="map-grid"></div>
+                  <div class="map-pin" style="top:40%;left:35%">📍</div>
+                  <div class="map-pin" style="top:55%;left:58%">📍</div>
+                  <div class="map-pin" style="top:28%;left:62%">📍</div>
+                  <div class="map-label">3 active sites · GPS live</div>
+                </div>
+                <div class="weather-strip">
+                  <div class="weather-chip">☀️ 78°F</div>
+                  <div class="weather-chip">💨 12mph</div>
+                  <div class="weather-chip">💧 20% rain</div>
+                  <div class="weather-chip">🟡 AQI 42</div>
+                </div>
+              </div>
+            </div>
+            <!-- Quick checklist -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Today's Checklist</div>
+                <div style="font-size:11px;font-family:var(--font-mono);color:var(--green)">4/6 done</div>
+              </div>
+              <div class="card-body">
+                <div class="checklist-item" onclick="toggleCheck(this)">
+                  <div class="check-box checked"></div>
+                  <div class="check-text done">Pre-op equipment inspection</div>
+                  <div class="check-tag">Safety</div>
+                </div>
+                <div class="checklist-item" onclick="toggleCheck(this)">
+                  <div class="check-box checked"></div>
+                  <div class="check-text done">Crew clocked in via geofence</div>
+                  <div class="check-tag">Time</div>
+                </div>
+                <div class="checklist-item" onclick="toggleCheck(this)">
+                  <div class="check-box checked"></div>
+                  <div class="check-text done">Daily injury sign-off</div>
+                  <div class="check-tag">Safety</div>
+                </div>
+                <div class="checklist-item" onclick="toggleCheck(this)">
+                  <div class="check-box checked"></div>
+                  <div class="check-text done">Material delivery logged</div>
+                  <div class="check-tag">Material</div>
+                </div>
+                <div class="checklist-item" onclick="toggleCheck(this)">
+                  <div class="check-box"></div>
+                  <div class="check-text">Upload progress photos</div>
+                  <div class="check-tag">Docs</div>
+                </div>
+                <div class="checklist-item" onclick="toggleCheck(this)">
+                  <div class="check-box"></div>
+                  <div class="check-text">Submit daily report to client</div>
+                  <div class="check-tag">Client</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CREW & TIME -->
+      <div class="panel" id="panel-crew">
+        <div class="ai-bar">
+          <div class="ai-dot"></div>
+          <div class="ai-text"><strong>FieldOS AI</strong> — Marco is running 22 min late. Payroll is ready to export for 7 employees.</div>
+          <div class="ai-chips">
+            <div class="ai-chip" onclick="aiAction('Export payroll to QuickBooks')">Export Payroll</div>
+            <div class="ai-chip" onclick="aiAction('Message Marco about delay')">Message Marco</div>
+          </div>
+        </div>
+        <div class="stats-row" style="grid-template-columns: repeat(3,1fr)">
+          <div class="stat-card green">
+            <div class="stat-label">Clocked In</div>
+            <div class="stat-value" style="color:var(--green)">3</div>
+            <div class="stat-change up">On-site now</div>
+          </div>
+          <div class="stat-card amber">
+            <div class="stat-label">Total Hours Today</div>
+            <div class="stat-value" style="color:var(--amber)">22.5h</div>
+            <div class="stat-change" style="color:var(--muted)">Across all crew</div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-label">Week Labor Cost</div>
+            <div class="stat-value" style="color:var(--blue)">$9.2k</div>
+            <div class="stat-change up">↓ 4% vs last week</div>
+          </div>
+        </div>
+        <div class="card one-col">
+          <div class="card-header">
+            <div class="card-title">Crew Time Tracker</div>
+            <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px">+ Add Employee</button>
+          </div>
+          <div class="card-body" style="padding:0 18px">
+            <table class="crew-table">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Status</th>
+                  <th>Job Site</th>
+                  <th>Cost Code</th>
+                  <th>Today's Hours</th>
+                  <th>Perf.</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><div class="member-info"><div class="member-avatar" style="background:rgba(34,197,94,0.15);color:var(--green)">MR</div><div><div class="member-name">Marco Reyes</div><div class="member-role">Operator</div></div></div></td>
+                  <td><span class="status-pill on">On-site</span></td>
+                  <td style="font-size:12px;font-family:var(--font-mono)">Cedar Valley</td>
+                  <td><span class="tag" style="background:var(--blue-dim);color:var(--blue)">Excavation</span></td>
+                  <td><div class="hours-bar"><div class="bar-track"><div class="bar-fill" style="width:72%"></div></div><div class="hours-num">5.8h</div></div></td>
+                  <td><span style="color:var(--green);font-family:var(--font-mono);font-size:12px">★ 94%</span></td>
+                </tr>
+                <tr>
+                  <td><div class="member-info"><div class="member-avatar" style="background:rgba(59,130,246,0.15);color:var(--blue)">TK</div><div><div class="member-name">Tyler Kim</div><div class="member-role">Foreman</div></div></div></td>
+                  <td><span class="status-pill on">On-site</span></td>
+                  <td style="font-size:12px;font-family:var(--font-mono)">Maple Ridge</td>
+                  <td><span class="tag" style="background:var(--amber-dim);color:var(--amber)">Grading</span></td>
+                  <td><div class="hours-bar"><div class="bar-track"><div class="bar-fill" style="width:80%"></div></div><div class="hours-num">6.4h</div></div></td>
+                  <td><span style="color:var(--green);font-family:var(--font-mono);font-size:12px">★ 98%</span></td>
+                </tr>
+                <tr>
+                  <td><div class="member-info"><div class="member-avatar" style="background:rgba(245,158,11,0.15);color:var(--amber)">SL</div><div><div class="member-name">Sandra Lima</div><div class="member-role">Equipment Op.</div></div></div></td>
+                  <td><span class="status-pill travel">Traveling</span></td>
+                  <td style="font-size:12px;font-family:var(--font-mono)">Hwy 34</td>
+                  <td><span class="tag" style="background:var(--green-dim);color:var(--green)">Install</span></td>
+                  <td><div class="hours-bar"><div class="bar-track"><div class="bar-fill" style="width:60%"></div></div><div class="hours-num">4.8h</div></div></td>
+                  <td><span style="color:var(--green);font-family:var(--font-mono);font-size:12px">★ 89%</span></td>
+                </tr>
+                <tr>
+                  <td><div class="member-info"><div class="member-avatar" style="background:rgba(107,114,128,0.15);color:var(--muted2)">BH</div><div><div class="member-name">Brian Hughes</div><div class="member-role">Laborer</div></div></div></td>
+                  <td><span class="status-pill off">Clocked Out</span></td>
+                  <td style="font-size:12px;font-family:var(--font-mono);color:var(--muted)">—</td>
+                  <td style="color:var(--muted);font-size:12px">—</td>
+                  <td><div class="hours-bar"><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div><div class="hours-num">8.0h</div></div></td>
+                  <td><span style="color:var(--muted2);font-family:var(--font-mono);font-size:12px">★ 82%</span></td>
+                </tr>
+                <tr>
+                  <td><div class="member-info"><div class="member-avatar" style="background:rgba(168,85,247,0.15);color:var(--purple)">AV</div><div><div class="member-name">Ana Vargas</div><div class="member-role">Laborer</div></div></div></td>
+                  <td><span class="status-pill off">PTO</span></td>
+                  <td style="font-size:12px;font-family:var(--font-mono);color:var(--muted)">—</td>
+                  <td style="color:var(--muted);font-size:12px">—</td>
+                  <td><div class="hours-bar"><div class="bar-track"><div class="bar-fill" style="width:0%"></div></div><div class="hours-num">0.0h</div></div></td>
+                  <td><span style="color:var(--muted2);font-family:var(--font-mono);font-size:12px">★ 91%</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- JOBS & PROFIT -->
+      <div class="panel" id="panel-jobs">
+        <div class="stats-row">
+          <div class="stat-card green"><div class="stat-label">Total Backlog</div><div class="stat-value" style="color:var(--green)">$421k</div><div class="stat-change up">↑ $48k this month</div></div>
+          <div class="stat-card amber"><div class="stat-label">Avg Margin</div><div class="stat-value" style="color:var(--amber)">18.4%</div><div class="stat-change" style="color:var(--muted)">Target: 22%</div></div>
+          <div class="stat-card blue"><div class="stat-label">Jobs This Month</div><div class="stat-value" style="color:var(--blue)">11</div><div class="stat-change up">↑ 3 won this week</div></div>
+          <div class="stat-card red"><div class="stat-label">Over Budget</div><div class="stat-value" style="color:var(--red)">1</div><div class="stat-change down">Cedar Valley flagged</div></div>
+        </div>
+        <div class="card one-col">
+          <div class="card-header">
+            <div class="card-title">Job Profit Dashboard — Live</div>
+            <button class="btn btn-primary" style="font-size:11px;padding:6px 12px" onclick="aiAction('Build new bid from historical data')">+ New Bid</button>
+          </div>
+          <div class="card-body">
+            <div style="margin-bottom:18px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+                <div style="font-size:13px;font-weight:500">Maple Ridge Subdivision Grading</div>
+                <div style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">$48,200 budget</div>
+              </div>
+              <div class="profit-meter">
+                <div class="profit-label"><span>Labor $18.2k</span><span>Mat. $6.4k</span><span>Equip $4.1k</span><span style="color:var(--green)">Margin +22%</span></div>
+                <div class="profit-track"><div class="profit-fill good" style="width:78%"></div></div>
+              </div>
+            </div>
+            <div style="margin-bottom:18px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+                <div style="font-size:13px;font-weight:500">Cedar Valley Rd Drainage</div>
+                <div style="font-family:var(--font-mono);font-size:12px;color:var(--red)">⚠ Over budget</div>
+              </div>
+              <div class="profit-meter">
+                <div class="profit-label"><span>Labor $14.8k</span><span>Mat. $5.9k</span><span>Equip $3.6k</span><span style="color:var(--red)">Margin -3%</span></div>
+                <div class="profit-track"><div class="profit-fill bad" style="width:103%;"></div></div>
+              </div>
+            </div>
+            <div style="margin-bottom:18px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+                <div style="font-size:13px;font-weight:500">Hwy 34 Storm Drain Install</div>
+                <div style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">$31,500 budget</div>
+              </div>
+              <div class="profit-meter">
+                <div class="profit-label"><span>Labor $10.3k</span><span>Mat. $4.2k</span><span>Equip $2.8k</span><span style="color:var(--green)">Margin +17%</span></div>
+                <div class="profit-track"><div class="profit-fill good" style="width:83%"></div></div>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+                <div style="font-size:13px;font-weight:500">Lakeside Retention Pond</div>
+                <div style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">$67,000 budget</div>
+              </div>
+              <div class="profit-meter">
+                <div class="profit-label"><span>Labor $8.1k</span><span>Mat. $2.9k</span><span>Equip $2.1k</span><span style="color:var(--green)">Margin +31%</span></div>
+                <div class="profit-track"><div class="profit-fill good" style="width:20%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PHOTOS & DOCS -->
+      <div class="panel" id="panel-photos">
+        <div class="ai-bar">
+          <div class="ai-dot"></div>
+          <div class="ai-text"><strong>FieldOS AI</strong> — 24 new photos uploaded today. Ready to auto-generate a progress report or client update.</div>
+          <div class="ai-chips">
+            <div class="ai-chip" onclick="aiAction('Generate client progress report with today\'s photos')">Client Report</div>
+            <div class="ai-chip" onclick="aiAction('Add captions to all uncaptioned photos')">Auto-Caption</div>
+            <div class="ai-chip" onclick="aiAction('Create before/after comparison gallery')">Before/After</div>
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                Recent Job Photos
+              </div>
+              <button class="btn btn-primary" style="font-size:11px;padding:6px 12px">+ Upload</button>
+            </div>
+            <div class="card-body">
+              <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap">
+                <span class="tag" style="background:var(--accent);color:#000;cursor:pointer">All</span>
+                <span class="tag" style="background:var(--bg3);color:var(--muted2);cursor:pointer">Maple Ridge</span>
+                <span class="tag" style="background:var(--bg3);color:var(--muted2);cursor:pointer">Cedar Valley</span>
+                <span class="tag" style="background:var(--bg3);color:var(--muted2);cursor:pointer">Hwy 34</span>
+              </div>
+              <div class="photo-grid">
+                <!-- Generated SVG photo thumbnails -->
+                <div class="photo-thumb"><div class="photo-canvas"><svg viewBox="0 0 80 80" width="100%"><rect width="80" height="80" fill="#1e232d"/><rect x="10" y="50" width="60" height="20" fill="#2a3142" rx="2"/><rect x="20" y="35" width="40" height="20" fill="#354060" rx="2"/><circle cx="40" cy="28" r="8" fill="#f5a623" opacity="0.6"/><rect x="0" y="55" width="80" height="25" fill="#111318" opacity="0.7"/></svg></div><div class="photo-overlay"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
+                <div class="photo-thumb"><div class="photo-canvas"><svg viewBox="0 0 80 80" width="100%"><rect width="80" height="80" fill="#1e2838"/><rect x="5" y="40" width="70" height="35" fill="#16213e" rx="1"/><rect x="15" y="45" width="50" height="5" fill="#0f3460" rx="1"/><rect x="15" y="53" width="35" height="5" fill="#0f3460" rx="1"/><path d="M0 40 Q40 20 80 35 L80 80 L0 80Z" fill="#1e2838" opacity="0.5"/></svg></div><div class="photo-overlay"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
+                <div class="photo-thumb"><div class="photo-canvas"><svg viewBox="0 0 80 80" width="100%"><rect width="80" height="80" fill="#1a1f2e"/><rect x="0" y="55" width="80" height="25" fill="#2d4a1e" rx="0"/><rect x="0" y="45" width="80" height="15" fill="#3a5c28"/><rect x="25" y="20" width="30" height="35" fill="#f5a623" opacity="0.3" rx="2"/><rect x="30" y="25" width="20" height="4" fill="#f5a623" rx="1"/></svg></div><div class="photo-overlay"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
+                <div class="photo-thumb"><div class="photo-canvas"><svg viewBox="0 0 80 80" width="100%"><rect width="80" height="80" fill="#1c1a14"/><rect x="0" y="60" width="80" height="20" fill="#8B7355" opacity="0.6"/><rect x="0" y="45" width="80" height="20" fill="#6b5a3e" opacity="0.5"/><path d="M0 40 L20 20 L40 30 L60 15 L80 25 L80 50 L0 50Z" fill="#2a2418" opacity="0.8"/><circle cx="65" cy="15" r="6" fill="#f5a623" opacity="0.7"/></svg></div><div class="photo-overlay"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
+                <div class="photo-thumb"><div class="photo-canvas"><svg viewBox="0 0 80 80" width="100%"><rect width="80" height="80" fill="#141a25"/><rect x="10" y="55" width="60" height="20" fill="#1e2d45" rx="1"/><rect x="30" y="30" width="20" height="30" fill="#253550" rx="2"/><rect x="22" y="38" width="36" height="6" fill="#3b82f6" opacity="0.4" rx="1"/><rect x="22" y="47" width="28" height="4" fill="#3b82f6" opacity="0.3" rx="1"/></svg></div><div class="photo-overlay"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
+                <div class="photo-thumb"><div class="photo-canvas"><svg viewBox="0 0 80 80" width="100%"><rect width="80" height="80" fill="#1a231a"/><rect x="0" y="50" width="80" height="30" fill="#2d4a2d" rx="0"/><path d="M0 50 Q20 35 40 45 Q60 55 80 40 L80 55 Q60 70 40 60 Q20 50 0 65Z" fill="#3a6b3a" opacity="0.7"/><circle cx="15" cy="25" r="12" fill="#22c55e" opacity="0.2"/><circle cx="15" cy="25" r="7" fill="#22c55e" opacity="0.3"/></svg></div><div class="photo-overlay"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
+                <div class="photo-thumb"><div class="photo-canvas"><svg viewBox="0 0 80 80" width="100%"><rect width="80" height="80" fill="#201818"/><rect x="5" y="45" width="70" height="30" fill="#3d2b2b" rx="1"/><path d="M10 45 L10 25 L20 25 L20 45Z" fill="#5c3e3e"/><path d="M25 45 L25 20 L35 20 L35 45Z" fill="#5c3e3e"/><path d="M40 45 L40 30 L50 30 L50 45Z" fill="#5c3e3e"/><path d="M55 45 L55 15 L65 15 L65 45Z" fill="#ef4444" opacity="0.4"/></svg></div><div class="photo-overlay"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div>
+                <div class="photo-thumb" style="display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--bg3)" onclick="aiAction('Open full photo gallery')">
+                  <div style="text-align:center">
+                    <div style="font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--muted)">+17</div>
+                    <div style="font-size:11px;color:var(--muted);font-family:var(--font-mono)">more</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Documents</div><button class="btn btn-ghost" style="font-size:11px;padding:5px 10px">+ Upload</button></div>
+            <div class="card-body">
+              <div class="job-item">
+                <div style="font-size:22px">📄</div>
+                <div class="job-info"><div class="job-name">Maple Ridge — Site Plans</div><div class="job-meta"><span>PDF</span><span>4.2 MB</span><span>Today</span></div></div>
+              </div>
+              <div class="job-item">
+                <div style="font-size:22px">📋</div>
+                <div class="job-info"><div class="job-name">Cedar Valley — Permit #CK-4421</div><div class="job-meta"><span>PDF</span><span>1.1 MB</span><span>Mon</span></div></div>
+              </div>
+              <div class="job-item">
+                <div style="font-size:22px">📊</div>
+                <div class="job-info"><div class="job-name">Hwy 34 — Inspection Form</div><div class="job-meta"><span>Fillable PDF</span><span>2.8 MB</span><span>Wed</span></div></div>
+              </div>
+              <div class="job-item">
+                <div style="font-size:22px">🗺️</div>
+                <div class="job-info"><div class="job-name">Lakeside — Topographic Survey</div><div class="job-meta"><span>DWG</span><span>18 MB</span><span>Last week</span></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EQUIPMENT -->
+      <div class="panel" id="panel-equipment">
+
+        <!-- Stats row -->
+        <div class="stats-row">
+          <div class="stat-card green"><div class="stat-label">Owned Fleet</div><div class="stat-value" style="color:var(--green)">5</div><div class="stat-change up">All GPS-tracked</div></div>
+          <div class="stat-card amber"><div class="stat-label">Service Due</div><div class="stat-value" style="color:var(--amber)">2</div><div class="stat-change down">Within 50 hours</div></div>
+          <div class="stat-card red"><div class="stat-label">Shop Queue</div><div class="stat-value" style="color:var(--red)">1</div><div class="stat-change down">Cat 336 repair pending</div></div>
+          <div class="stat-card blue"><div class="stat-label">Active Rentals</div><div class="stat-value" style="color:var(--blue)">3</div><div class="stat-change up">$4,820 / week</div></div>
+        </div>
+
+        <!-- Owned Fleet -->
+        <div class="card one-col">
+          <div class="card-header">
+            <div class="card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v4h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+              Fleet & Equipment Tracker
+            </div>
+            <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px">+ Log Service</button>
+          </div>
+          <div class="card-body">
+            <div class="equip-item">
+              <div class="equip-icon">🚛</div>
+              <div class="equip-info"><div class="equip-name">CAT 336 Excavator</div><div class="equip-detail">1,240 hrs total · Last service: 1,200 hrs · Next: 1,250 hrs · Cedar Valley</div></div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <div class="equip-status" style="color:var(--red)">⚠ Shop Queue</div>
+                <button class="btn btn-ghost" style="font-size:10px;padding:4px 8px" onclick="aiAction('Log service request for CAT 336 Excavator')">Log Repair</button>
+              </div>
+            </div>
+            <div class="equip-item">
+              <div class="equip-icon">🏗️</div>
+              <div class="equip-info"><div class="equip-name">John Deere 700K Dozer</div><div class="equip-detail">880 hrs total · Last service: 800 hrs · Next: 900 hrs · Maple Ridge</div></div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <div class="equip-status" style="color:var(--amber)">Due Soon</div>
+                <button class="btn btn-ghost" style="font-size:10px;padding:4px 8px" onclick="aiAction('Schedule service for John Deere 700K Dozer')">Schedule</button>
+              </div>
+            </div>
+            <div class="equip-item">
+              <div class="equip-icon">🚜</div>
+              <div class="equip-info"><div class="equip-name">Komatsu PC138 Mini Excavator</div><div class="equip-detail">440 hrs total · Last service: 400 hrs · Next: 500 hrs · Hwy 34</div></div>
+              <div class="equip-status" style="color:var(--green)">Good</div>
+            </div>
+            <div class="equip-item">
+              <div class="equip-icon">🚚</div>
+              <div class="equip-info"><div class="equip-name">International HX615 Dump Truck</div><div class="equip-detail">3,110 hrs total · Last service: 3,100 hrs · Next: 3,250 hrs · Maple Ridge</div></div>
+              <div class="equip-status" style="color:var(--green)">Good</div>
+            </div>
+            <div class="equip-item">
+              <div class="equip-icon">🏎️</div>
+              <div class="equip-info"><div class="equip-name">Volvo EC220 Excavator</div><div class="equip-detail">2,040 hrs total · Last service: 2,000 hrs · Next: 2,100 hrs · Lakeside</div></div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <div class="equip-status" style="color:var(--amber)">Due Soon</div>
+                <button class="btn btn-ghost" style="font-size:10px;padding:4px 8px" onclick="aiAction('Schedule service for Volvo EC220 Excavator')">Schedule</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RENTAL SECTION -->
+        <div class="card one-col" style="margin-top:0">
+          <div class="card-header">
+            <div class="card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+              Equipment Rentals
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <!-- Connected provider badges -->
+              <div style="display:flex;gap:6px;align-items:center;margin-right:4px">
+                <div id="cat-conn-badge" style="display:flex;align-items:center;gap:5px;background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.25);border-radius:6px;padding:4px 10px;font-size:11px;font-family:var(--font-mono);cursor:pointer" onclick="toggleCatLink()">
+                  <span id="cat-dot" style="width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0"></span>
+                  <span style="color:var(--accent);font-weight:500">CAT</span>
+                  <span id="cat-link-label" style="color:var(--muted)">Linked</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;font-family:var(--font-mono);cursor:pointer;color:var(--muted)" onclick="aiAction('Connect United Rentals account to FieldOS')">
+                  + United Rentals
+                </div>
+                <div style="display:flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;font-family:var(--font-mono);cursor:pointer;color:var(--muted)" onclick="aiAction('Connect Sunbelt Rentals account to FieldOS')">
+                  + Sunbelt
+                </div>
+              </div>
+              <button class="btn btn-primary" style="font-size:11px;padding:6px 12px" onclick="showRentalModal()">+ New Rental</button>
+            </div>
+          </div>
+
+          <!-- CAT LINK BANNER -->
+          <div id="cat-link-banner" style="background:linear-gradient(90deg,rgba(245,166,35,0.07),rgba(245,166,35,0.03));border-bottom:1px solid rgba(245,166,35,0.15);padding:11px 18px;display:flex;align-items:center;gap:14px">
+            <div style="font-size:22px">🔗</div>
+            <div style="flex:1">
+              <div style="font-size:12.5px;font-weight:500;color:var(--accent)">Caterpillar Financial Products — Connected</div>
+              <div style="font-size:11px;color:var(--muted);font-family:var(--font-mono)">Account #CAT-88241 · Syncing rental orders, invoices & telematics via Cat® Central API</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px;border-color:rgba(245,166,35,0.3);color:var(--accent)" onclick="aiAction('Open Caterpillar rental portal for account CAT-88241')">Open CAT Portal ↗</button>
+              <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="aiAction('Sync latest rental data from Caterpillar')">↻ Sync Now</button>
+            </div>
+          </div>
+
+          <!-- Rental table header -->
+          <div style="padding:10px 18px 0">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+              <span class="tag" style="background:var(--accent);color:#000;cursor:pointer;padding:3px 10px" onclick="filterRentals('all',this)">All</span>
+              <span class="tag" style="background:var(--bg3);color:var(--muted2);cursor:pointer;padding:3px 10px" onclick="filterRentals('active',this)">Active</span>
+              <span class="tag" style="background:var(--bg3);color:var(--muted2);cursor:pointer;padding:3px 10px" onclick="filterRentals('returning',this)">Returning Soon</span>
+              <span class="tag" style="background:var(--bg3);color:var(--muted2);cursor:pointer;padding:3px 10px" onclick="filterRentals('completed',this)">Completed</span>
+            </div>
+          </div>
+
+          <div class="card-body" style="padding-top:4px">
+
+            <!-- Rental Item 1 — CAT linked -->
+            <div class="rental-item" data-status="active">
+              <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--border)">
+                <div class="equip-icon" style="margin-top:2px">🚜</div>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+                    <div class="equip-name">CAT 320 Excavator</div>
+                    <span style="background:rgba(245,166,35,0.12);color:var(--accent);font-size:10px;font-family:var(--font-mono);padding:2px 7px;border-radius:4px;font-weight:500">CAT Rental</span>
+                    <span class="status-pill on" style="font-size:10px">Active</span>
+                  </div>
+                  <div class="equip-detail" style="margin-bottom:6px">Order #R-2024-7741 · Maple Ridge Subdivision · Operator: Tyler Kim</div>
+                  <div style="display:flex;gap:16px;flex-wrap:wrap">
+                    <div style="font-size:11px;font-family:var(--font-mono)"><span style="color:var(--muted)">Start:</span> <span>Jun 2</span></div>
+                    <div style="font-size:11px;font-family:var(--font-mono)"><span style="color:var(--muted)">Return:</span> <span style="color:var(--amber)">Jun 16 (7 days)</span></div>
+                    <div style="font-size:11px;font-family:var(--font-mono)"><span style="color:var(--muted)">Rate:</span> <span>$1,240/wk</span></div>
+                    <div style="font-size:11px;font-family:var(--font-mono)"><span style="color:var(--muted)">Hours logged:</span> <span style="color:var(--green)">42h</span></div>
+                    <div style="font-size:11px;font-family:var(--font-mono)"><span style="color:var(--muted)">Telematics:</span> <span style="color:var(--green)">● Live</span></div>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0">
+                  <div style="font-family:var(--font-display);font-size:15px;font-weight:700;color:var(--text)">$1,860</div>
+                  <div style="font-size:10px;font-family:var(--font-mono);color:var(--muted)">invoiced to date</div>
+                  <div style="display:flex;gap:6px;margin-top:4px">
+                    <button class="btn btn-ghost" style="font-size:10px;padding:4px 8px" onclick="aiAction('View CAT telematics data for Order R-2024-7741')">Telematics</button>
+                    <button class="btn btn-ghost" style="font-size:10px;padding:4px 8px" onclick="aiAction('Extend rental for CAT 320 Excavator by 1 week')">Extend</button>
+                    <button class="btn btn-ghost" style="font-size:10px;padding:4px 8px;color:var(--red);border-color:rgba(239,68,68,0.2)" onclick="aiAction('Schedule return for CAT 320 Excavator on Jun 16')">Return</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Rental Item 2 — CAT linked -->
+            <div class="rental-item" data-status="returning">
+              <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--border)">
+                <div class="equip-icon" style="margin-top:2px">🏗️</div>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+                    <div class="equip-name">CAT D6 Bulldozer</div>
+                    <span style="background:rgba(245,166,35,0.12);color:var(--accent);font-size:10px;font-family:var(--font-mono);padding:2px 7px;border-radius:4px;font-weight:500">CAT Rental</span>
+                    <span class="status-pill" style="font-size:10px;background:rgba(239,68,68,0.12);color:var(--red)">● Return in 2 days</span>
+                  </div>
+                  <div class="equip-detail" style="margin-bottom:6px">Order #R-2024-7688 · Cedar Valley Rd · Operator: Marco Reyes</div>
+                  <div style="display:flex;gap:16px;flex-wrap:wrap">
+                    <div style="font-size:11px;font-family:var(--font-mono)"><span style="color:var(--muted)">Start:</span> <span>May 30</span></div>
+                    <div style="font-size:11px;font-family:var(--font-mono)"><span style="color:var(--muted)">Return:</span> <span style="color:var(--red)">Jun 11 (2 days!)</span></div>
+                    <div style="font-size:11px;font-family:var(--font-mono)"><span style="color:var(--muted)">Rate:</span> <span>$1,680/wk</span></div>
+                    <div style="font-size:11px;font-family:var(--font-mono)"><span style="color:var(--muted)">Hours logged:</span> <span style="color:var(--green)">88h</span></div>
+                    <div style="font-size:11px;font-family:var(--font-mono)"><span style="color:var(--muted)">Telematics:</span> <span style="color:var(--green)">● Live</span></div>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0">
+                  <div style="font-family:var(--font-display);font-size:15px;font-weight:700;color:var(--text)">$3,360</div>
+                  <div style="font-size:10px;font-family:var(--font-mono);color:var(--muted)">invoiced to date</div>
+                  <div style="display:flex;gap:6px;margin-top:4px">
+                    <button class="btn btn-ghost" style="font-size:10px;padding:4px 8px" onclick="aiAction('View CAT telematics data for Order R-2024-7688')">Telematics</button>
+                    <button class="btn btn-ghost" style="font-size:10px;padding:4px 8px" onclick="aiAction('Extend rental for CAT D6 Bulldozer by 1 week — $1,680 additional')">Extend</button>
+                    <button class="btn btn-ghost" style="font-size:10px;padding:4px 8px;color:var(--red);border-color:rgba(239,68,68,0.2)" onclick="aiAction('Confirm return for CAT D6 Bulldozer scheduled Jun 11')">Confirm Return</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Rental Item 3 — manual (no telematics) -->
+            <div class="rental-item" data-status="active">
+              <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0">
+                <div class="equip-icon" style="margin-top:2px">💡</div>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+                    <div class="equip-name">Atlas Copco Light Tower (x2)</div>
+                    <span style="background:var(--blue-dim);color:var(--blue);font-size:10px;font-family:var(--font-mono);padding:2px 7px;border-radius:4px">Manual Entry</span>
+                    <span class="status-pill on" style="font-size:10px">Active</span>
+                  </div>
+                  <div class="equip-detail" style="margin-bottom:6px">Lakeside Retention Pond · No telematics — manually tracked</div>
+                  <div style="display:flex;gap:16px;flex-wrap:wrap">
+                    <div style="font-size:11px;font-family:var(--font-mono)"><span style="color:var(--muted)">Start:</span> <span>Jun 5</span></div>
+                    <div style="font-size:11px;font-family:var(--font-mono)"><span style="color:var(--muted)">Return:</span> <span>Jun 20</span></div>
+                    <div style="font-size:11px;font-family:var(--font-mono)"><span style="color:var(--muted)">Rate:</span> <span>$320/wk × 2</span></div>
+                    <div style="font-size:11px;font-family:var(--font-mono);color:var(--muted2)">Vendor: Sunbelt Rentals</div>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0">
+                  <div style="font-family:var(--font-display);font-size:15px;font-weight:700;color:var(--text)">$640</div>
+                  <div style="font-size:10px;font-family:var(--font-mono);color:var(--muted)">invoiced to date</div>
+                  <div style="display:flex;gap:6px;margin-top:4px">
+                    <button class="btn btn-ghost" style="font-size:10px;padding:4px 8px" onclick="aiAction('Connect Sunbelt Rentals account for Atlas Copco Light Towers to get telematics')">+ Link Account</button>
+                    <button class="btn btn-ghost" style="font-size:10px;padding:4px 8px" onclick="aiAction('Log usage hours for Atlas Copco Light Towers manually')">Log Hours</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Rental cost summary footer -->
+            <div style="background:var(--bg3);border-top:1px solid var(--border);border-radius:0 0 var(--radius-lg) var(--radius-lg);padding:12px 18px;display:flex;align-items:center;gap:24px;margin:0 -18px -16px">
+              <div style="font-size:12px;font-family:var(--font-mono);color:var(--muted)">3 active rentals</div>
+              <div style="font-size:12px;font-family:var(--font-mono)"><span style="color:var(--muted)">Weekly cost:</span> <span style="color:var(--text);font-weight:500">$4,820</span></div>
+              <div style="font-size:12px;font-family:var(--font-mono)"><span style="color:var(--muted)">Total invoiced (MTD):</span> <span style="color:var(--text);font-weight:500">$5,860</span></div>
+              <div style="margin-left:auto;display:flex;gap:8px">
+                <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="aiAction('Generate rental cost report for job costing this month')">Cost Report</button>
+                <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px;color:var(--accent);border-color:rgba(245,166,35,0.3)" onclick="aiAction('Sync all rental invoices from CAT and add to job costing')">Sync Invoices ↻</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RENTAL MODAL -->
+      <div id="rental-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;align-items:center;justify-content:center" onclick="closeRentalModal(event)">
+        <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:28px;max-width:520px;width:90%;max-height:90vh;overflow-y:auto">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+            <div style="font-family:var(--font-display);font-size:16px;font-weight:700">New Equipment Rental</div>
+            <div style="display:flex;gap:8px">
+              <div style="display:flex;align-items:center;gap:5px;background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.25);border-radius:6px;padding:4px 10px;font-size:11px;font-family:var(--font-mono)">
+                <span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block"></span>
+                <span style="color:var(--accent)">CAT Linked</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rental provider tabs -->
+          <div style="display:flex;gap:6px;margin-bottom:18px;background:var(--bg3);padding:4px;border-radius:8px">
+            <div id="rtab-cat" style="flex:1;text-align:center;padding:7px;border-radius:6px;background:var(--accent);color:#000;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-mono)" onclick="setRentalTab('cat')">🟡 CAT Rental</div>
+            <div id="rtab-manual" style="flex:1;text-align:center;padding:7px;border-radius:6px;color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--font-mono)" onclick="setRentalTab('manual')">Manual Entry</div>
+          </div>
+
+          <!-- CAT form -->
+          <div id="rform-cat">
+            <div style="background:var(--bg3);border:1px solid rgba(245,166,35,0.15);border-radius:var(--radius);padding:12px 14px;margin-bottom:16px;font-size:12px;color:var(--muted2)">
+              Pulling live inventory from <strong style="color:var(--accent)">Caterpillar Financial Products — Account #CAT-88241</strong>. Rental orders will sync automatically and telematics will be available once the unit is delivered.
+            </div>
+            <div style="margin-bottom:14px">
+              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.05em">Equipment Type</label>
+              <select style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);outline:none">
+                <option>CAT 320 Excavator</option>
+                <option>CAT 336 Excavator (Large)</option>
+                <option>CAT D6 Bulldozer</option>
+                <option>CAT 950 Wheel Loader</option>
+                <option>CAT 730 Articulated Truck</option>
+                <option>CAT 12M Motor Grader</option>
+                <option>CAT CS74 Vibratory Compactor</option>
+              </select>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+              <div>
+                <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.05em">Start Date</label>
+                <input type="date" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);outline:none">
+              </div>
+              <div>
+                <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.05em">Return Date</label>
+                <input type="date" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);outline:none">
+              </div>
+            </div>
+            <div style="margin-bottom:14px">
+              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.05em">Assign to Job</label>
+              <select style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);outline:none">
+                <option>Maple Ridge Subdivision Grading</option>
+                <option>Cedar Valley Rd Drainage</option>
+                <option>Hwy 34 Storm Drain Install</option>
+                <option>Lakeside Retention Pond</option>
+                <option>Ridgeline Access Road</option>
+              </select>
+            </div>
+            <div style="margin-bottom:14px">
+              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.05em">Assign Operator</label>
+              <select style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);outline:none">
+                <option>Marco Reyes</option>
+                <option>Tyler Kim</option>
+                <option>Sandra Lima</option>
+                <option>Brian Hughes</option>
+              </select>
+            </div>
+            <div style="background:var(--bg3);border-radius:8px;padding:12px 14px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center">
+              <div style="font-size:12px;color:var(--muted)">Estimated weekly cost</div>
+              <div style="font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--accent)">$1,240</div>
+            </div>
+          </div>
+
+          <!-- Manual form -->
+          <div id="rform-manual" style="display:none">
+            <div style="margin-bottom:14px">
+              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.05em">Equipment Name</label>
+              <input placeholder="e.g. Atlas Copco Light Tower" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);outline:none">
+            </div>
+            <div style="margin-bottom:14px">
+              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.05em">Rental Company</label>
+              <input placeholder="e.g. Sunbelt Rentals, Home Depot, local vendor" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);outline:none">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+              <div>
+                <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.05em">Weekly Rate ($)</label>
+                <input type="number" placeholder="0.00" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);outline:none">
+              </div>
+              <div>
+                <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.05em">Quantity</label>
+                <input type="number" value="1" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);outline:none">
+              </div>
+            </div>
+            <div style="margin-bottom:18px">
+              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.05em">Assign to Job</label>
+              <select style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--font-body);outline:none">
+                <option>Maple Ridge Subdivision Grading</option>
+                <option>Cedar Valley Rd Drainage</option>
+                <option>Hwy 34 Storm Drain Install</option>
+                <option>Lakeside Retention Pond</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="document.getElementById('rental-modal').style.display='none'">Cancel</button>
+            <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="submitRental()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><polyline points="20 6 9 17 4 12"/></svg>
+              Submit Rental Order
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SAFETY -->
+      <div class="panel" id="panel-safety">
+        <div style="background:var(--red-dim);border:1px solid rgba(239,68,68,0.25);border-radius:var(--radius-lg);padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:12px">
+          <div style="font-size:20px">⚠️</div>
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--red)">1 Open Incident Report</div>
+            <div style="font-size:12px;color:var(--muted)">Minor equipment scrape — Cedar Valley · Filed by Marco Reyes · Awaiting supervisor sign-off</div>
+          </div>
+          <button class="btn btn-ghost" style="margin-left:auto;font-size:11px;border-color:rgba(239,68,68,0.3);color:var(--red)">Review</button>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Safety Log</div><button class="btn btn-primary" style="font-size:11px;padding:6px 12px">+ File Report</button></div>
+            <div class="card-body">
+              <div class="safety-item">
+                <div class="safety-icon" style="background:var(--red-dim)">🚨</div>
+                <div><div class="safety-title">Incident Report — Equipment Scrape</div><div class="safety-meta">Cedar Valley · Marco Reyes · Today 09:14 · Open</div></div>
+              </div>
+              <div class="safety-item">
+                <div class="safety-icon" style="background:var(--green-dim)">✅</div>
+                <div><div class="safety-title">Daily Sign-Off — No injuries</div><div class="safety-meta">All 5 employees · Maple Ridge + Hwy 34 · Today 06:58</div></div>
+              </div>
+              <div class="safety-item">
+                <div class="safety-icon" style="background:var(--blue-dim)">📋</div>
+                <div><div class="safety-title">JSA Completed — Excavation near utilities</div><div class="safety-meta">Tyler Kim · Maple Ridge · Yesterday 07:10</div></div>
+              </div>
+              <div class="safety-item">
+                <div class="safety-icon" style="background:var(--amber-dim)">🪧</div>
+                <div><div class="safety-title">Toolbox Talk — Trenching & Shoring</div><div class="safety-meta">Full crew · Mon 06:45 · 8 signatures collected</div></div>
+              </div>
+              <div class="safety-item">
+                <div class="safety-icon" style="background:var(--green-dim)">✅</div>
+                <div><div class="safety-title">Equipment Pre-Op Inspection</div><div class="safety-meta">Sandra Lima · Hwy 34 · Mon 07:02</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">DOT Logs</div></div>
+            <div class="card-body">
+              <div class="job-item"><div class="job-dot" style="background:var(--green)"></div><div class="job-info"><div class="job-name">Brian Hughes — HX615 Haul Log</div><div class="job-meta"><span>Submitted</span><span>Today</span><span>4 runs</span></div></div></div>
+              <div class="job-item"><div class="job-dot" style="background:var(--green)"></div><div class="job-info"><div class="job-name">Sandra Lima — Transit to Hwy 34</div><div class="job-meta"><span>Submitted</span><span>Today</span><span>1 trip</span></div></div></div>
+              <div class="job-item"><div class="job-dot" style="background:var(--amber)"></div><div class="job-info"><div class="job-name">Marco Reyes — Cedar Valley Haul</div><div class="job-meta"><span>Pending</span><span>Due EOD</span></div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAYROLL -->
+      <div class="panel" id="panel-payroll">
+        <div class="ai-bar">
+          <div class="ai-dot"></div>
+          <div class="ai-text"><strong>FieldOS AI</strong> — Payroll is ready. 7 employees, $9,248 total. QuickBooks export or BusyPayroll direct deposit ready.</div>
+          <div class="ai-chips">
+            <div class="ai-chip" onclick="aiAction('Export payroll to QuickBooks Online')">→ QuickBooks</div>
+            <div class="ai-chip" onclick="aiAction('Run direct deposit via BusyPayroll')">Direct Deposit</div>
+            <div class="ai-chip" onclick="aiAction('Generate prevailing wage report by jurisdiction')">Prevailing Wage</div>
+          </div>
+        </div>
+        <div class="stats-row">
+          <div class="stat-card green"><div class="stat-label">Gross Payroll</div><div class="stat-value" style="color:var(--green)">$9,248</div><div class="stat-change up">7 employees</div></div>
+          <div class="stat-card amber"><div class="stat-label">Regular Hours</div><div class="stat-value" style="color:var(--amber)">278h</div><div class="stat-change" style="color:var(--muted)">This week</div></div>
+          <div class="stat-card blue"><div class="stat-label">Overtime Hours</div><div class="stat-value" style="color:var(--blue)">14h</div><div class="stat-change down">$620 OT cost</div></div>
+          <div class="stat-card red"><div class="stat-label">Admin Time</div><div class="stat-value" style="color:var(--text)">18<span style="font-size:14px">min</span></div><div class="stat-change up">↓ from 2+ hours</div></div>
+        </div>
+        <div class="card one-col">
+          <div class="card-header">
+            <div class="card-title">Weekly Payroll Summary</div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px">View History</button>
+              <button class="btn btn-primary" style="font-size:11px;padding:6px 12px" onclick="aiAction('Export payroll to QuickBooks Online')">Export to QBO →</button>
+            </div>
+          </div>
+          <div class="card-body" style="padding:0 18px">
+            <table class="crew-table">
+              <thead><tr><th>Employee</th><th>Reg Hrs</th><th>OT Hrs</th><th>Cost Code</th><th>Gross Pay</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td><div class="member-info"><div class="member-avatar" style="background:rgba(34,197,94,0.15);color:var(--green)">MR</div><div><div class="member-name">Marco Reyes</div></div></div></td>
+                  <td style="font-family:var(--font-mono);font-size:12px">40h</td>
+                  <td style="font-family:var(--font-mono);font-size:12px;color:var(--amber)">4h</td>
+                  <td><span class="tag" style="background:var(--blue-dim);color:var(--blue)">Excavation</span></td>
+                  <td style="font-family:var(--font-display);font-size:13px;font-weight:600">$1,440</td>
+                  <td><span class="status-pill on">Ready</span></td>
+                </tr>
+                <tr>
+                  <td><div class="member-info"><div class="member-avatar" style="background:rgba(59,130,246,0.15);color:var(--blue)">TK</div><div><div class="member-name">Tyler Kim</div></div></div></td>
+                  <td style="font-family:var(--font-mono);font-size:12px">40h</td>
+                  <td style="font-family:var(--font-mono);font-size:12px;color:var(--amber)">6h</td>
+                  <td><span class="tag" style="background:var(--amber-dim);color:var(--amber)">Grading</span></td>
+                  <td style="font-family:var(--font-display);font-size:13px;font-weight:600">$1,810</td>
+                  <td><span class="status-pill on">Ready</span></td>
+                </tr>
+                <tr>
+                  <td><div class="member-info"><div class="member-avatar" style="background:rgba(245,158,11,0.15);color:var(--amber)">SL</div><div><div class="member-name">Sandra Lima</div></div></div></td>
+                  <td style="font-family:var(--font-mono);font-size:12px">40h</td>
+                  <td style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">0h</td>
+                  <td><span class="tag" style="background:var(--green-dim);color:var(--green)">Install</span></td>
+                  <td style="font-family:var(--font-display);font-size:13px;font-weight:600">$1,320</td>
+                  <td><span class="status-pill on">Ready</span></td>
+                </tr>
+                <tr>
+                  <td><div class="member-info"><div class="member-avatar" style="background:rgba(107,114,128,0.15);color:var(--muted2)">BH</div><div><div class="member-name">Brian Hughes</div></div></div></td>
+                  <td style="font-family:var(--font-mono);font-size:12px">40h</td>
+                  <td style="font-family:var(--font-mono);font-size:12px;color:var(--amber)">4h</td>
+                  <td><span class="tag" style="background:var(--bg4);color:var(--muted2)">Hauling</span></td>
+                  <td style="font-family:var(--font-display);font-size:13px;font-weight:600">$1,240</td>
+                  <td><span class="status-pill on">Ready</span></td>
+                </tr>
+                <tr>
+                  <td><div class="member-info"><div class="member-avatar" style="background:rgba(168,85,247,0.15);color:var(--purple)">AV</div><div><div class="member-name">Ana Vargas</div></div></div></td>
+                  <td style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">—</td>
+                  <td style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">—</td>
+                  <td><span class="tag" style="background:rgba(168,85,247,0.1);color:var(--purple)">PTO</span></td>
+                  <td style="font-family:var(--font-display);font-size:13px;font-weight:600">$960</td>
+                  <td><span class="status-pill on">Ready</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- HAULING & DISPATCH -->
+      <div class="panel" id="panel-hauling">
+        <div class="ai-bar">
+          <div class="ai-dot"></div>
+          <div class="ai-text"><strong>FieldOS AI</strong> — 4 trucks active. Maple Ridge site volume: 847 tons loaded today. Haul ticket #HT-1142 needs reconciliation.</div>
+          <div class="ai-chips">
+            <div class="ai-chip" onclick="aiAction('Dispatch next available carrier to Maple Ridge pit')">Dispatch Carrier</div>
+            <div class="ai-chip" onclick="aiAction('Reconcile haul ticket HT-1142 discrepancy')">Reconcile HT-1142</div>
+            <div class="ai-chip" onclick="aiAction('Generate digital haul report for Cedar Valley today')">Haul Report</div>
+          </div>
+        </div>
+        <div class="stats-row">
+          <div class="stat-card green"><div class="stat-label">Active Trucks</div><div class="stat-value" style="color:var(--green)">4</div><div class="stat-change up">&#9679; Live GPS tracked</div></div>
+          <div class="stat-card amber"><div class="stat-label">Loads Today</div><div class="stat-value" style="color:var(--amber)">31</div><div class="stat-change up">847 tons total</div></div>
+          <div class="stat-card blue"><div class="stat-label">Open Haul Tickets</div><div class="stat-value" style="color:var(--blue)">8</div><div class="stat-change" style="color:var(--muted)">2 pending reconcile</div></div>
+          <div class="stat-card red"><div class="stat-label">Site Inventory</div><div class="stat-value" style="color:var(--text)">1,240<span style="font-size:13px;color:var(--muted)"> T</span></div><div class="stat-change up">Maple Ridge stockpile</div></div>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Live Dispatch Board</div>
+              <div style="display:flex;gap:8px">
+                <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-family:var(--font-mono);color:var(--green)"><span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block"></span>GPS Live</div>
+                <button class="btn btn-primary" style="font-size:11px;padding:5px 10px" onclick="aiAction('Dispatch next available carrier to Maple Ridge pit')">+ Dispatch</button>
+              </div>
+            </div>
+            <div class="card-body" style="padding:0 18px">
+              <table class="crew-table">
+                <thead><tr><th>Driver / Carrier</th><th>Status</th><th>Job Site</th><th>Load</th><th>Loads Today</th><th>GPS</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td><div class="member-info"><div class="member-avatar" style="background:rgba(34,197,94,0.15);color:var(--green)">DW</div><div><div class="member-name">Dave Walsh</div><div class="member-role">Walsh Trucking LLC</div></div></div></td>
+                    <td><span class="status-pill on">Hauling</span></td>
+                    <td style="font-size:12px;font-family:var(--font-mono)">Maple Ridge</td>
+                    <td style="font-size:12px;font-family:var(--font-mono)">28T gravel</td>
+                    <td style="font-family:var(--font-mono);font-size:12px;color:var(--green)">8 loads</td>
+                    <td style="font-size:11px;font-family:var(--font-mono);color:var(--green)">&#9679; Live</td>
+                  </tr>
+                  <tr>
+                    <td><div class="member-info"><div class="member-avatar" style="background:rgba(59,130,246,0.15);color:var(--blue)">JR</div><div><div class="member-name">Jose Ruiz</div><div class="member-role">Ruiz Hauling Co.</div></div></div></td>
+                    <td><span class="status-pill travel">Returning</span></td>
+                    <td style="font-size:12px;font-family:var(--font-mono)">Cedar Valley</td>
+                    <td style="font-size:12px;font-family:var(--font-mono)">Empty</td>
+                    <td style="font-family:var(--font-mono);font-size:12px;color:var(--blue)">6 loads</td>
+                    <td style="font-size:11px;font-family:var(--font-mono);color:var(--green)">&#9679; Live</td>
+                  </tr>
+                  <tr>
+                    <td><div class="member-info"><div class="member-avatar" style="background:rgba(245,158,11,0.15);color:var(--amber)">PT</div><div><div class="member-name">Pete Tanner</div><div class="member-role">Summit Transport</div></div></div></td>
+                    <td><span class="status-pill on">Loading</span></td>
+                    <td style="font-size:12px;font-family:var(--font-mono)">Maple Ridge</td>
+                    <td style="font-size:12px;font-family:var(--font-mono)">At pit</td>
+                    <td style="font-family:var(--font-mono);font-size:12px;color:var(--amber)">7 loads</td>
+                    <td style="font-size:11px;font-family:var(--font-mono);color:var(--green)">&#9679; Live</td>
+                  </tr>
+                  <tr>
+                    <td><div class="member-info"><div class="member-avatar" style="background:rgba(107,114,128,0.15);color:var(--muted2)">BH</div><div><div class="member-name">Brian Hughes</div><div class="member-role">Company Driver</div></div></div></td>
+                    <td><span class="status-pill on">Hauling</span></td>
+                    <td style="font-size:12px;font-family:var(--font-mono)">Hwy 34</td>
+                    <td style="font-size:12px;font-family:var(--font-mono)">24T fill</td>
+                    <td style="font-family:var(--font-mono);font-size:12px;color:var(--green)">10 loads</td>
+                    <td style="font-size:11px;font-family:var(--font-mono);color:var(--green)">&#9679; Live</td>
+                  </tr>
+                  <tr>
+                    <td><div class="member-info"><div class="member-avatar" style="background:rgba(239,68,68,0.12);color:var(--red)">KM</div><div><div class="member-name">Kyle Morris</div><div class="member-role">Morris Logistics</div></div></div></td>
+                    <td><span class="status-pill off">Offline</span></td>
+                    <td style="font-size:12px;font-family:var(--font-mono);color:var(--muted)">--</td>
+                    <td style="font-size:12px;font-family:var(--font-mono);color:var(--muted)">--</td>
+                    <td style="font-family:var(--font-mono);font-size:12px;color:var(--muted)">0 loads</td>
+                    <td style="font-size:11px;font-family:var(--font-mono);color:var(--muted)">&#9679; Offline</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Site Volume and Inventory</div>
+                <div style="font-size:11px;font-family:var(--font-mono);color:var(--green)">Synced with pit scale</div>
+              </div>
+              <div class="card-body">
+                <div class="profit-meter" style="margin-bottom:14px">
+                  <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;font-family:var(--font-mono)"><span>Maple Ridge -- Gravel stockpile</span><span style="color:var(--green)">1,240 T</span></div>
+                  <div class="profit-track"><div class="profit-fill good" style="width:72%"></div></div>
+                </div>
+                <div class="profit-meter" style="margin-bottom:14px">
+                  <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;font-family:var(--font-mono)"><span>Cedar Valley -- Fill material</span><span style="color:var(--amber)">320 T</span></div>
+                  <div class="profit-track"><div class="profit-fill warn" style="width:28%"></div></div>
+                </div>
+                <div class="profit-meter">
+                  <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;font-family:var(--font-mono)"><span>Hwy 34 -- Aggregate base</span><span style="color:var(--green)">580 T</span></div>
+                  <div class="profit-track"><div class="profit-fill good" style="width:52%"></div></div>
+                </div>
+                <div style="border-top:1px solid var(--border);padding-top:10px;margin-top:10px;display:flex;gap:8px">
+                  <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px;flex:1;justify-content:center" onclick="aiAction('Order material delivery for Cedar Valley -- fill material running low')">Order Delivery</button>
+                  <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px;flex:1;justify-content:center" onclick="aiAction('Export inventory report with tonnage and cost per site')">Export Report</button>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Recent Haul Tickets</div>
+                <button class="btn btn-primary" style="font-size:11px;padding:5px 10px" onclick="aiAction('Create new electronic haul ticket')">+ New Ticket</button>
+              </div>
+              <div class="card-body">
+                <div class="job-item">
+                  <div class="job-dot" style="background:var(--green)"></div>
+                  <div class="job-info"><div class="job-name">#HT-1145 -- Dave Walsh 28T Gravel</div><div class="job-meta"><span>Maple Ridge</span><span>Verified</span><span>11:42am</span></div></div>
+                  <div style="font-size:11px;font-family:var(--font-mono);color:var(--green)">Reconciled</div>
+                </div>
+                <div class="job-item">
+                  <div class="job-dot" style="background:var(--green)"></div>
+                  <div class="job-info"><div class="job-name">#HT-1144 -- Brian Hughes 24T Fill</div><div class="job-meta"><span>Hwy 34</span><span>Verified</span><span>10:58am</span></div></div>
+                  <div style="font-size:11px;font-family:var(--font-mono);color:var(--green)">Reconciled</div>
+                </div>
+                <div class="job-item">
+                  <div class="job-dot" style="background:var(--amber)"></div>
+                  <div class="job-info"><div class="job-name">#HT-1142 -- Jose Ruiz 26T Gravel</div><div class="job-meta"><span>Cedar Valley</span><span style="color:var(--amber)">Weight mismatch</span></div></div>
+                  <button class="btn btn-ghost" style="font-size:10px;padding:3px 8px;color:var(--amber);border-color:rgba(245,158,11,0.3);flex-shrink:0" onclick="aiAction('Reconcile haul ticket HT-1142 discrepancy')">Reconcile</button>
+                </div>
+                <div class="job-item">
+                  <div class="job-dot" style="background:var(--blue)"></div>
+                  <div class="job-info"><div class="job-name">#HT-1141 -- Pete Tanner 28T Gravel</div><div class="job-meta"><span>Maple Ridge</span><span>Offline ticket</span><span>Synced</span></div></div>
+                  <div style="font-size:11px;font-family:var(--font-mono);color:var(--blue)">Synced</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card one-col">
+          <div class="card-header">
+            <div class="card-title">Digital Reconciliation and Audit Trail</div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="aiAction('Export full audit trail for Cedar Valley this week')">Export Audit</button>
+              <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="aiAction('Archive all reconciled haul tickets for this month')">Archive Month</button>
+            </div>
+          </div>
+          <div class="card-body" style="padding:0 18px">
+            <table class="crew-table">
+              <thead><tr><th>Ticket #</th><th>Date/Time</th><th>Driver</th><th>Material</th><th>Pit Scale</th><th>Ticket Wt.</th><th>Delta</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td style="font-family:var(--font-mono);font-size:12px;color:var(--blue)">#HT-1145</td>
+                  <td style="font-family:var(--font-mono);font-size:11px">Today 11:42</td>
+                  <td style="font-size:12px">Dave Walsh</td>
+                  <td style="font-size:12px">Gravel</td>
+                  <td style="font-family:var(--font-mono);font-size:12px">28.2T</td>
+                  <td style="font-family:var(--font-mono);font-size:12px">28.0T</td>
+                  <td style="font-family:var(--font-mono);font-size:12px;color:var(--green)">+0.2T</td>
+                  <td><span class="status-pill on">Reconciled</span></td>
+                </tr>
+                <tr>
+                  <td style="font-family:var(--font-mono);font-size:12px;color:var(--blue)">#HT-1144</td>
+                  <td style="font-family:var(--font-mono);font-size:11px">Today 10:58</td>
+                  <td style="font-size:12px">Brian Hughes</td>
+                  <td style="font-size:12px">Fill</td>
+                  <td style="font-family:var(--font-mono);font-size:12px">24.1T</td>
+                  <td style="font-family:var(--font-mono);font-size:12px">24.0T</td>
+                  <td style="font-family:var(--font-mono);font-size:12px;color:var(--green)">+0.1T</td>
+                  <td><span class="status-pill on">Reconciled</span></td>
+                </tr>
+                <tr>
+                  <td style="font-family:var(--font-mono);font-size:12px;color:var(--amber)">#HT-1142</td>
+                  <td style="font-family:var(--font-mono);font-size:11px">Today 09:30</td>
+                  <td style="font-size:12px">Jose Ruiz</td>
+                  <td style="font-size:12px">Gravel</td>
+                  <td style="font-family:var(--font-mono);font-size:12px">26.0T</td>
+                  <td style="font-family:var(--font-mono);font-size:12px">23.4T</td>
+                  <td style="font-family:var(--font-mono);font-size:12px;color:var(--red)">-2.6T</td>
+                  <td><span class="status-pill" style="background:var(--amber-dim);color:var(--amber)">Review</span></td>
+                </tr>
+                <tr>
+                  <td style="font-family:var(--font-mono);font-size:12px;color:var(--blue)">#HT-1141</td>
+                  <td style="font-family:var(--font-mono);font-size:11px">Today 08:14</td>
+                  <td style="font-size:12px">Pete Tanner</td>
+                  <td style="font-size:12px">Gravel</td>
+                  <td style="font-family:var(--font-mono);font-size:12px">28.0T</td>
+                  <td style="font-family:var(--font-mono);font-size:12px">28.0T</td>
+                  <td style="font-family:var(--font-mono);font-size:12px;color:var(--green)">0.0T</td>
+                  <td><span class="status-pill on">Reconciled</span></td>
+                </tr>
+              </tbody>
+            </table>
+            <div style="background:var(--bg3);border-top:1px solid var(--border);margin:0 -18px;padding:10px 18px;display:flex;gap:20px;font-size:12px;font-family:var(--font-mono)">
+              <span><span style="color:var(--muted)">Loads today:</span> <strong>31</strong></span>
+              <span><span style="color:var(--muted)">Total tonnage:</span> <strong>847T</strong></span>
+              <span><span style="color:var(--muted)">Load cost (today):</span> <strong style="color:var(--green)">$6,420</strong></span>
+              <span><span style="color:var(--muted)">Flagged:</span> <strong style="color:var(--red)">1 ticket</strong></span>
+              <span style="margin-left:auto"><span style="color:var(--muted)">Audit log:</span> <strong style="color:var(--blue)">All entries timestamped and archived</strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NETWORK -->
+      <div class="panel" id="panel-network">
+        <div class="ai-bar">
+          <div class="ai-dot"></div>
+          <div class="ai-text"><strong>FieldOS AI</strong> -- 3 carriers available in your area. 1 new supplier quote for aggregate received. Cedar Valley needs 2 more trucks for Friday.</div>
+          <div class="ai-chips">
+            <div class="ai-chip" onclick="aiAction('Find available carriers near Maple Ridge for Friday')">Find Carriers</div>
+            <div class="ai-chip" onclick="aiAction('Review new aggregate quote from Rocky Mountain Quarry')">Review Quote</div>
+            <div class="ai-chip" onclick="aiAction('Send haul request to network for 2 trucks Cedar Valley Friday')">Post Haul Request</div>
+          </div>
+        </div>
+        <div class="stats-row">
+          <div class="stat-card green"><div class="stat-label">Active Carriers</div><div class="stat-value" style="color:var(--green)">5</div><div class="stat-change up">In your network</div></div>
+          <div class="stat-card blue"><div class="stat-label">Suppliers</div><div class="stat-value" style="color:var(--blue)">3</div><div class="stat-change up">1 new quote</div></div>
+          <div class="stat-card amber"><div class="stat-label">Open Haul Requests</div><div class="stat-value" style="color:var(--amber)">2</div><div class="stat-change" style="color:var(--muted)">Bids pending</div></div>
+          <div class="stat-card red"><div class="stat-label">Subcontractors</div><div class="stat-value" style="color:var(--text)">4</div><div class="stat-change" style="color:var(--muted)">Active this month</div></div>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Carrier Marketplace</div>
+              <button class="btn btn-primary" style="font-size:11px;padding:5px 10px" onclick="aiAction('Post new haul request to the carrier marketplace')">+ Post Request</button>
+            </div>
+            <div class="card-body">
+              <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+                <span class="tag" style="background:var(--accent);color:#000;padding:4px 10px;cursor:pointer">All</span>
+                <span class="tag" style="background:var(--bg3);color:var(--muted2);padding:4px 10px;cursor:pointer">Carriers</span>
+                <span class="tag" style="background:var(--bg3);color:var(--muted2);padding:4px 10px;cursor:pointer">Suppliers</span>
+                <span class="tag" style="background:var(--bg3);color:var(--muted2);padding:4px 10px;cursor:pointer">Brokers</span>
+                <span class="tag" style="background:var(--bg3);color:var(--muted2);padding:4px 10px;cursor:pointer">Subcontractors</span>
+              </div>
+              <div class="equip-item">
+                <div class="equip-icon" style="background:rgba(34,197,94,0.1)">&#x1F69B;</div>
+                <div class="equip-info">
+                  <div class="equip-name">Walsh Trucking LLC <span class="tag" style="background:var(--green-dim);color:var(--green);margin-left:6px">Carrier</span></div>
+                  <div class="equip-detail">3 trucks available -- $4.20/T -- 4.9 stars -- 8 loads today -- Tempe, AZ</div>
+                </div>
+                <button class="btn btn-ghost" style="font-size:10px;padding:4px 8px" onclick="aiAction('Dispatch Walsh Trucking LLC for next Maple Ridge load')">Dispatch</button>
+              </div>
+              <div class="equip-item">
+                <div class="equip-icon" style="background:rgba(59,130,246,0.1)">&#x1F69B;</div>
+                <div class="equip-info">
+                  <div class="equip-name">Ruiz Hauling Co. <span class="tag" style="background:var(--blue-dim);color:var(--blue);margin-left:6px">Carrier</span></div>
+                  <div class="equip-detail">2 trucks available -- $4.40/T -- 4.7 stars -- 6 loads today -- Mesa, AZ</div>
+                </div>
+                <button class="btn btn-ghost" style="font-size:10px;padding:4px 8px" onclick="aiAction('Dispatch Ruiz Hauling Co. for Cedar Valley Friday haul')">Dispatch</button>
+              </div>
+              <div class="equip-item">
+                <div class="equip-icon" style="background:rgba(245,158,11,0.1)">&#x1F3D7;</div>
+                <div class="equip-info">
+                  <div class="equip-name">Rocky Mountain Quarry <span class="tag" style="background:var(--amber-dim);color:var(--amber);margin-left:6px">Supplier</span></div>
+                  <div class="equip-detail">Aggregate base -- $28/T -- New quote received -- Min 100T -- Scottsdale, AZ</div>
+                </div>
+                <button class="btn btn-ghost" style="font-size:10px;padding:4px 8px;color:var(--green);border-color:rgba(34,197,94,0.3)" onclick="aiAction('Review new aggregate quote from Rocky Mountain Quarry')">View Quote</button>
+              </div>
+              <div class="equip-item">
+                <div class="equip-icon" style="background:rgba(168,85,247,0.1)">&#x1F4CB;</div>
+                <div class="equip-info">
+                  <div class="equip-name">Southwest Haul Brokers <span class="tag" style="background:rgba(168,85,247,0.12);color:var(--purple);margin-left:6px">Broker</span></div>
+                  <div class="equip-detail">Manages 12 owner-operators -- Available Fri-Sun -- Phoenix, AZ</div>
+                </div>
+                <button class="btn btn-ghost" style="font-size:10px;padding:4px 8px" onclick="aiAction('Contact Southwest Haul Brokers for Friday Cedar Valley trucks')">Contact</button>
+              </div>
+              <div class="equip-item">
+                <div class="equip-icon" style="background:rgba(239,68,68,0.1)">&#x1F527;</div>
+                <div class="equip-info">
+                  <div class="equip-name">AZ Dirt Works <span class="tag" style="background:var(--red-dim);color:var(--red);margin-left:6px">Subcontractor</span></div>
+                  <div class="equip-detail">Grading and compaction -- Active on Maple Ridge -- $3,800/day -- Gilbert, AZ</div>
+                </div>
+                <button class="btn btn-ghost" style="font-size:10px;padding:4px 8px" onclick="aiAction('View AZ Dirt Works subcontract details and change orders')">Details</button>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div class="card">
+              <div class="card-header"><div class="card-title">Open Haul Requests</div></div>
+              <div class="card-body">
+                <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px">
+                  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+                    <div style="font-size:13px;font-weight:500">Cedar Valley -- 2 trucks needed</div>
+                    <span class="status-pill" style="background:var(--amber-dim);color:var(--amber);font-size:10px">Bidding</span>
+                  </div>
+                  <div style="font-size:11px;font-family:var(--font-mono);color:var(--muted);margin-bottom:8px">Friday Jun 14 -- ~80T fill -- Rate up to $4.50/T -- 7am start</div>
+                  <div style="font-size:12px;color:var(--muted2)">2 bids received: Walsh $4.20/T -- Summit $4.35/T</div>
+                  <div style="display:flex;gap:8px;margin-top:10px">
+                    <button class="btn btn-ghost" style="font-size:10px;padding:4px 8px;flex:1;justify-content:center" onclick="aiAction('Accept Walsh Trucking bid for Cedar Valley Friday haul at $4.20/T')">Accept Walsh</button>
+                    <button class="btn btn-ghost" style="font-size:10px;padding:4px 8px;flex:1;justify-content:center" onclick="aiAction('Accept Summit Transport bid for Cedar Valley Friday haul at $4.35/T')">Accept Summit</button>
+                  </div>
+                </div>
+                <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px">
+                  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+                    <div style="font-size:13px;font-weight:500">Lakeside -- aggregate delivery</div>
+                    <span class="status-pill" style="background:var(--blue-dim);color:var(--blue);font-size:10px">1 bid</span>
+                  </div>
+                  <div style="font-size:11px;font-family:var(--font-mono);color:var(--muted);margin-bottom:8px">Mon Jun 17 -- 120T aggregate base -- Rate open</div>
+                  <div style="font-size:12px;color:var(--muted2)">Rocky Mountain Quarry: $28/T + delivery</div>
+                  <button class="btn btn-ghost" style="font-size:10px;padding:4px 8px;margin-top:8px;width:100%;justify-content:center" onclick="aiAction('Accept Rocky Mountain Quarry quote for Lakeside aggregate delivery')">Accept Quote</button>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">Network Messages</div><div style="font-size:11px;font-family:var(--font-mono);color:var(--muted)">All parties</div></div>
+              <div class="card-body">
+                <div style="display:flex;flex-direction:column;gap:10px">
+                  <div style="display:flex;gap:8px">
+                    <div class="member-avatar" style="width:26px;height:26px;font-size:10px;background:rgba(34,197,94,0.15);color:var(--green);flex-shrink:0">DW</div>
+                    <div style="background:var(--bg3);border-radius:0 8px 8px 8px;padding:8px 11px;flex:1">
+                      <div style="font-size:10px;font-family:var(--font-mono);color:var(--muted);margin-bottom:3px">Dave Walsh - Carrier - 11:38am</div>
+                      <div style="font-size:12px">Load 8 complete. Pit scale: 28.2T. Heading back to yard after this run.</div>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:8px">
+                    <div class="member-avatar" style="width:26px;height:26px;font-size:10px;background:rgba(245,158,11,0.15);color:var(--amber);flex-shrink:0">RM</div>
+                    <div style="background:var(--bg3);border-radius:0 8px 8px 8px;padding:8px 11px;flex:1">
+                      <div style="font-size:10px;font-family:var(--font-mono);color:var(--muted);margin-bottom:3px">Rocky Mountain Quarry - Supplier - 10:55am</div>
+                      <div style="font-size:12px">Quote attached for 120T aggregate. Valid through EOW. Happy to deliver Monday AM.</div>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:8px;flex-direction:row-reverse">
+                    <div class="member-avatar" style="width:26px;height:26px;font-size:10px;background:rgba(245,166,35,0.15);color:var(--accent);flex-shrink:0">JD</div>
+                    <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.15);border-radius:8px 0 8px 8px;padding:8px 11px;flex:1">
+                      <div style="font-size:10px;font-family:var(--font-mono);color:var(--muted);margin-bottom:3px">You - 10:02am</div>
+                      <div style="font-size:12px">Need 2 trucks at Cedar Valley this Friday by 7am. Fill material run, ~80T total. Anyone available?</div>
+                    </div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:12px">
+                  <input placeholder="Message all parties..." style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:12px;font-family:var(--font-body);outline:none">
+                  <button class="btn btn-primary" style="font-size:11px;padding:8px 12px" onclick="aiAction('Message sent to all network parties')">Send</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+</div>
+
+<!-- AI MODAL -->
+<div id="ai-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;display:none;align-items:center;justify-content:center" onclick="closeAI(event)">
+  <div style="background:var(--bg2);border:1px solid rgba(168,85,247,0.3);border-radius:16px;padding:28px;max-width:480px;width:90%;box-shadow:0 0 60px rgba(168,85,247,0.15)">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <div style="width:10px;height:10px;border-radius:50%;background:var(--purple);animation:pulse 1s infinite"></div>
+      <div style="font-family:var(--font-display);font-size:15px;font-weight:700">GrndworkOS AI</div>
+      <div id="ai-modal-model" style="font-size:10px;font-family:var(--font-mono);color:var(--muted);margin-left:auto;background:var(--bg3);padding:2px 8px;border-radius:20px"></div>
+    </div>
+    <div id="ai-modal-text" style="font-size:13.5px;line-height:1.7;color:var(--muted2);margin-bottom:20px"></div>
+    <button class="btn btn-ghost" onclick="document.getElementById('ai-modal').style.display='none'" style="width:100%;justify-content:center">Close</button>
+  </div>
+</div>
+
+<script>
+  const panels = ['dashboard','crew','jobs','photos','hauling','network','equipment','safety','payroll'];
+  const titles = { dashboard:'Dashboard', crew:'Crew & Time Tracking', jobs:'Jobs & Profitability', photos:'Photos & Documents', hauling:'Hauling, Dispatch & Haul Tickets', network:'Network — Carriers, Suppliers & Brokers', equipment:'Equipment & Fleet', safety:'Safety & OHS Compliance', payroll:'Payroll & Cost Codes' };
+
+  function showPanel(id) {
+    panels.forEach(p => {
+      document.getElementById('panel-'+p).classList.toggle('active', p===id);
+    });
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    document.getElementById('panel-title').textContent = titles[id];
+  }
+
+  function toggleCheck(el) {
+    const box = el.querySelector('.check-box');
+    const text = el.querySelector('.check-text');
+    box.classList.toggle('checked');
+    text.classList.toggle('done');
+  }
+
+  // ─── AI CONFIG ──────────────────────────────────────────────────────────
+  //
+  // TWO MODES — choose one:
+  //
+  // MODE 1: RAILWAY BACKEND (production-safe, recommended)
+  //   Set RAILWAY_URL to your deployed Railway server URL.
+  //   Your API keys stay on the server, never in this file.
+  //   Leave CLAUDE_KEY and GEMINI_KEY as empty strings.
+  //
+  // MODE 2: DIRECT KEYS (demo only, not for real clients)
+  //   Leave RAILWAY_URL as empty string.
+  //   Fill in CLAUDE_KEY and GEMINI_KEY below.
+  //   Fine for local testing and demos — never deploy with real keys publicly.
+  //
+  const RAILWAY_URL = '';                      // e.g. 'https://grndworkos-ai.up.railway.app'
+  const CLAUDE_KEY  = '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';                      // only needed if NOT using Railway
+  const GEMINI_KEY  = 'AIzaSyAXXTPdrRkIHhvrgmZ_ehq7IJdpDwfSEhI';                      // only needed if NOT using Railway
+
+  // ─── TASK ROUTING ────────────────────────────────────────────────────────
+  const SIMPLE_TASKS = [
+    'Generate daily report','Recap Cedar Valley','Generate client progress report',
+    'Add captions','Create before/after','Open full photo gallery',
+    'Generate digital haul report','Create new electronic haul ticket',
+    'Archive all reconciled','Find available carriers',
+    'Contact Southwest Haul Brokers','Message sent to all network',
+    'Export inventory report','Sync latest rental data',
+    'Open Caterpillar rental portal',
+  ];
+  const MODERATE_TASKS = [
+    'Create safety checklist','Export payroll','Run direct deposit',
+    'Message Marco','Dispatch next available','Dispatch Walsh Trucking',
+    'Dispatch Ruiz Hauling','Send haul request','Post new haul request',
+    'Order material delivery','Export full audit trail',
+    'Log service request','Schedule service','Schedule return',
+    'Confirm return','Extend rental','Connect Sunbelt','Connect United',
+    'Log usage hours','Generate rental cost report',
+    'Sync all rental invoices','Accept Walsh Trucking bid',
+    'Accept Summit Transport bid','Accept Rocky Mountain Quarry',
+  ];
+  const PREMIUM_TASKS = [
+    'Generate prevailing wage report','Build new bid from historical data',
+    'Reconcile haul ticket','Review new aggregate quote',
+    'View AZ Dirt Works subcontract',
+  ];
+
+  function classifyTask(action) {
+    if (PREMIUM_TASKS.some(t => action.includes(t)))  return 'sonnet';
+    if (MODERATE_TASKS.some(t => action.includes(t))) return 'haiku';
+    return 'gemini';
+  }
+
+  const SYSTEM_PROMPTS = {
+    gemini: 'You are a field operations assistant inside GrndworkOS, a construction management platform. Be brief and practical. 2-3 sentences max.',
+    haiku:  'You are a field operations assistant inside GrndworkOS. Be accurate and structured. Keep responses under 4 sentences.',
+    sonnet: 'You are a senior field operations analyst inside GrndworkOS. Think carefully. Flag risks, compliance issues, or financial implications. Use clear sections if needed.',
+  };
+
+  // ─── API CALLERS (direct mode) ────────────────────────────────────────────
+  async function callGeminiDirect(prompt) {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
+      { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ contents:[{ parts:[{ text: prompt }] }] }) }
+    );
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    return { reply: data.candidates[0].content.parts[0].text, model: 'gemini', model_label: 'Gemini Flash' };
+  }
+
+  async function callClaudeDirect(prompt, model) {
+    const modelId = model === 'sonnet' ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001';
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key': CLAUDE_KEY,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true',
+      },
+      body: JSON.stringify({
+        model: modelId,
+        max_tokens: model === 'sonnet' ? 2048 : 1024,
+        system: SYSTEM_PROMPTS[model],
+        messages:[{ role:'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const labels = { haiku:'Claude Haiku', sonnet:'Claude Sonnet' };
+    return { reply: data.content[0].text, model, model_label: labels[model] };
+  }
+
+  // ─── API CALLER (Railway mode) ────────────────────────────────────────────
+  async function callRailway(action) {
+    const res = await fetch(`${RAILWAY_URL}/ai`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    return data; // { reply, model, model_label }
+  }
+
+  // ─── MAIN AI ACTION ───────────────────────────────────────────────────────
+  async function aiAction(msg) {
+    const modal  = document.getElementById('ai-modal');
+    const textEl = document.getElementById('ai-modal-text');
+    const badge  = document.getElementById('ai-modal-model');
+
+    textEl.textContent = 'Thinking...';
+    if (badge) badge.textContent = '';
+    modal.style.display = 'flex';
+
+    try {
+      let result;
+
+      if (RAILWAY_URL) {
+        // Production mode — call Railway backend (keys stay on server)
+        result = await callRailway(msg);
+      } else if (CLAUDE_KEY || GEMINI_KEY) {
+        // Demo mode — call APIs directly from browser
+        const model  = classifyTask(msg);
+        const prompt = `${SYSTEM_PROMPTS[model]}\n\nUser triggered: "${msg}". Respond as a smart field operations assistant for a construction company.`;
+        if (model === 'gemini') result = await callGeminiDirect(prompt);
+        else                    result = await callClaudeDirect(prompt, model);
+      } else {
+        throw new Error('No AI configured yet. Add your API keys or Railway URL in the AI CONFIG section of the script.');
+      }
+
+      textEl.textContent = result.reply;
+      if (badge) badge.textContent = '· ' + result.model_label;
+
+    } catch (err) {
+      textEl.textContent = '⚠ ' + err.message;
+    }
+  }
+
+  function closeAI(e) { if (e.target === document.getElementById('ai-modal')) document.getElementById('ai-modal').style.display='none'; }
+
+  function showRentalModal() {
+    document.getElementById('rental-modal').style.display = 'flex';
+  }
+  function closeRentalModal(e) {
+    if (e.target === document.getElementById('rental-modal')) document.getElementById('rental-modal').style.display = 'none';
+  }
+  function setRentalTab(tab) {
+    document.getElementById('rform-cat').style.display = tab === 'cat' ? 'block' : 'none';
+    document.getElementById('rform-manual').style.display = tab === 'manual' ? 'block' : 'none';
+    document.getElementById('rtab-cat').style.background = tab === 'cat' ? 'var(--accent)' : 'transparent';
+    document.getElementById('rtab-cat').style.color = tab === 'cat' ? '#000' : 'var(--muted)';
+    document.getElementById('rtab-manual').style.background = tab === 'manual' ? 'var(--accent)' : 'transparent';
+    document.getElementById('rtab-manual').style.color = tab === 'manual' ? '#000' : 'var(--muted)';
+  }
+  function submitRental() {
+    document.getElementById('rental-modal').style.display = 'none';
+    aiAction('Rental order submitted to Caterpillar. Order confirmation will arrive via email and sync automatically to FieldOS within 15 minutes. Telematics will activate upon equipment delivery.');
+  }
+  function filterRentals(status, el) {
+    document.querySelectorAll('.rental-item').forEach(item => {
+      item.style.display = (status === 'all' || item.dataset.status === status) ? 'block' : 'none';
+    });
+    el.closest('div').querySelectorAll('span.tag').forEach(t => {
+      t.style.background = 'var(--bg3)'; t.style.color = 'var(--muted2)';
+    });
+    el.style.background = 'var(--accent)'; el.style.color = '#000';
+  }
+  function toggleCatLink() {
+    const dot = document.getElementById('cat-dot');
+    const label = document.getElementById('cat-link-label');
+    const banner = document.getElementById('cat-link-banner');
+    const linked = label.textContent === 'Linked';
+    dot.style.background = linked ? 'var(--muted)' : 'var(--green)';
+    label.textContent = linked ? 'Disconnected' : 'Linked';
+    banner.style.display = linked ? 'none' : 'flex';
+    if (!linked) aiAction('Caterpillar Financial Products account reconnected. Syncing rental orders and telematics data.');
+  }
+  function downloadApp() {
+    const html = document.documentElement.outerHTML;
+    const blob = new Blob([html], { type: 'text/html' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'fieldos.html';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  function clockInModal() {
+    aiAction('Crew clocked in via geofence auto-detection. Marco Reyes, Tyler Kim clocked in at Cedar Valley Rd. Geofence radius: 300ft. Time: ' + new Date().toLocaleTimeString());
+  }
+
+  // Live clock
+  function updateClock() {
+    const el = document.getElementById('live-clock');
+    if (el) {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2,'0');
+      const m = String(now.getMinutes()).padStart(2,'0');
+      const s = String(now.getSeconds()).padStart(2,'0');
+      el.textContent = `${h}:${m}:${s}`;
+    }
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+</script>
+</body>
+</html>
